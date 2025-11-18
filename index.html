@@ -5,117 +5,332 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CrankRooms Virtual Tour</title>
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
         body {
             margin: 0;
             overflow: hidden;
-            font-family: Arial, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            -webkit-tap-highlight-color: transparent;
         }
+        
         #canvas-container {
             width: 100vw;
             height: 100vh;
+            touch-action: none;
         }
-        #info {
-            position: absolute;
-            top: 20px;
-            left: 20px;
-            color: white;
-            background: rgba(0, 0, 0, 0.7);
-            padding: 15px;
-            border-radius: 8px;
-            font-size: 14px;
-            max-width: 300px;
-        }
-        #controls {
-            position: absolute;
-            top: 20px;
+        
+        /* Floating Action Button */
+        #fab {
+            position: fixed;
+            bottom: 20px;
             right: 20px;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            max-width: 200px;
-        }
-        .control-row {
-            display: flex;
-            gap: 10px;
-        }
-        .btn {
-            background: rgba(0, 0, 0, 0.7);
+            width: 56px;
+            height: 56px;
+            background: rgba(0, 0, 0, 0.85);
+            border: none;
+            border-radius: 50%;
             color: white;
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            padding: 10px 20px;
-            border-radius: 8px;
+            font-size: 24px;
             cursor: pointer;
-            font-size: 14px;
-            transition: all 0.3s;
-            white-space: nowrap;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
-        .btn:hover {
-            background: rgba(0, 0, 0, 0.9);
-            border-color: rgba(255, 255, 255, 0.6);
+        
+        #fab:hover {
+            background: rgba(0, 0, 0, 0.95);
+            transform: scale(1.05);
         }
-        .btn-small {
-            padding: 8px 12px;
+        
+        #fab:active {
+            transform: scale(0.95);
+        }
+        
+        /* Bottom Control Panel */
+        #controls {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0, 0, 0, 0.92);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            padding: 20px;
+            transform: translateY(100%);
+            transition: transform 0.3s ease;
+            z-index: 999;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        #controls.visible {
+            transform: translateY(0);
+        }
+        
+        .control-section {
+            margin-bottom: 16px;
+        }
+        
+        .control-section:last-child {
+            margin-bottom: 0;
+        }
+        
+        .control-label {
+            color: rgba(255, 255, 255, 0.7);
             font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+            font-weight: 500;
         }
-        select {
-            background: rgba(0, 0, 0, 0.7);
+        
+        .button-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 10px;
+        }
+        
+        .btn {
+            background: rgba(255, 255, 255, 0.1);
             color: white;
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            padding: 10px 15px;
-            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 14px 20px;
+            border-radius: 12px;
             cursor: pointer;
             font-size: 14px;
-            transition: all 0.3s;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            min-height: 48px;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        .btn:hover {
+            background: rgba(255, 255, 255, 0.15);
+            border-color: rgba(255, 255, 255, 0.3);
+        }
+        
+        .btn:active {
+            transform: scale(0.97);
+            background: rgba(255, 255, 255, 0.2);
+        }
+        
+        select {
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 14px 16px;
+            border-radius: 12px;
+            cursor: pointer;
+            font-size: 14px;
             width: 100%;
+            min-height: 48px;
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='white' d='M6 9L1 4h10z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 16px center;
+            padding-right: 40px;
         }
-        select:hover {
-            background: rgba(0, 0, 0, 0.9);
-            border-color: rgba(255, 255, 255, 0.6);
+        
+        select:focus {
+            outline: none;
+            border-color: rgba(255, 255, 255, 0.4);
         }
+        
         select option {
             background: rgba(0, 0, 0, 0.95);
             color: white;
         }
+        
+        /* Help Button */
+        #help-btn {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            width: 40px;
+            height: 40px;
+            background: rgba(0, 0, 0, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            color: white;
+            font-size: 18px;
+            cursor: pointer;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+        
+        #help-btn:hover {
+            background: rgba(0, 0, 0, 0.9);
+        }
+        
+        /* Info Panel */
+        #info {
+            position: fixed;
+            top: 70px;
+            left: 20px;
+            right: 20px;
+            max-width: 320px;
+            color: white;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            padding: 20px;
+            border-radius: 12px;
+            font-size: 14px;
+            z-index: 999;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        #info.visible {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        
+        #info h3 {
+            margin: 0 0 12px 0;
+            font-size: 16px;
+            font-weight: 600;
+        }
+        
+        #info p {
+            margin: 0;
+            line-height: 1.6;
+            color: rgba(255, 255, 255, 0.9);
+        }
+        
+        /* Share Panel */
         #share-panel {
-            position: absolute;
+            position: fixed;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
             background: rgba(0, 0, 0, 0.95);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
             padding: 30px;
-            border-radius: 12px;
-            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
             color: white;
             max-width: 500px;
-            z-index: 200;
+            width: 90%;
+            z-index: 1001;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
         }
+        
+        #share-panel h3 {
+            margin: 0 0 12px 0;
+            font-size: 20px;
+            font-weight: 600;
+        }
+        
+        #share-panel p {
+            margin: 0 0 16px 0;
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 14px;
+        }
+        
         #share-panel input {
             width: 100%;
-            padding: 10px;
-            margin: 10px 0;
-            border-radius: 5px;
-            border: 1px solid rgba(255, 255, 255, 0.3);
+            padding: 14px;
+            margin-bottom: 16px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
             background: rgba(255, 255, 255, 0.1);
             color: white;
             font-size: 14px;
+            font-family: monospace;
         }
-        #share-panel button {
-            margin: 5px;
+        
+        #share-panel input:focus {
+            outline: none;
+            border-color: rgba(255, 255, 255, 0.4);
         }
+        
+        #share-panel .button-row {
+            display: flex;
+            gap: 10px;
+        }
+        
+        #share-panel .btn {
+            flex: 1;
+        }
+        
         #loading {
-            position: absolute;
+            position: fixed;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
             color: white;
-            font-size: 24px;
-            background: rgba(0, 0, 0, 0.8);
-            padding: 30px;
-            border-radius: 10px;
-            z-index: 100;
+            font-size: 18px;
+            background: rgba(0, 0, 0, 0.9);
+            padding: 30px 40px;
+            border-radius: 16px;
+            z-index: 1002;
+            text-align: center;
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
         }
+        
         .hidden {
-            display: none;
+            display: none !important;
+        }
+        
+        /* Mobile Optimizations */
+        @media (max-width: 768px) {
+            #controls {
+                padding: 16px;
+                max-height: 70vh;
+                overflow-y: auto;
+            }
+            
+            .button-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            #share-panel {
+                width: 95%;
+                padding: 24px;
+            }
+            
+            #info {
+                max-width: calc(100vw - 40px);
+            }
+        }
+        
+        /* Desktop Optimizations */
+        @media (min-width: 769px) {
+            #fab {
+                bottom: 30px;
+                right: 30px;
+            }
+            
+            #controls {
+                left: 50%;
+                right: auto;
+                transform: translate(-50%, 100%);
+                max-width: 600px;
+                border-radius: 16px 16px 0 0;
+            }
+            
+            #controls.visible {
+                transform: translate(-50%, 0);
+            }
         }
     </style>
 </head>
@@ -124,44 +339,60 @@
     
     <div id="loading">Loading CrankRooms...</div>
     
+    <!-- Floating Action Button -->
+    <button id="fab" aria-label="Toggle controls">☰</button>
+    
+    <!-- Help Button -->
+    <button id="help-btn" aria-label="Show controls help">?</button>
+    
+    <!-- Bottom Control Panel -->
     <div id="controls">
-        <select id="bgColor">
-            <option value="0x87ceeb">Sky Blue</option>
-            <option value="0x1a1a1a">Dark Gray</option>
-            <option value="0x000000">Black</option>
-            <option value="0xffffff">White</option>
-            <option value="0x2c3e50">Midnight Blue</option>
-            <option value="0x34495e">Slate Gray</option>
-            <option value="0xecf0f1">Light Gray</option>
-            <option value="0x95a5a6">Silver</option>
-        </select>
-        
-        <div class="control-row">
-            <button class="btn btn-small" id="resetCamera">Reset View</button>
-            <button class="btn btn-small" id="screenshot">Screenshot</button>
+        <div class="control-section">
+            <div class="control-label">Background</div>
+            <select id="bgColor" aria-label="Select background color">
+                <option value="0x87ceeb">Sky Blue</option>
+                <option value="0x1a1a1a">Dark Gray</option>
+                <option value="0x000000">Black</option>
+                <option value="0xffffff">White</option>
+                <option value="0x2c3e50">Midnight Blue</option>
+                <option value="0x34495e">Slate Gray</option>
+                <option value="0xecf0f1">Light Gray</option>
+                <option value="0x95a5a6">Silver</option>
+            </select>
         </div>
         
-        <div class="control-row">
-            <button class="btn btn-small" id="fullscreen">Fullscreen</button>
-            <button class="btn btn-small" id="shareLink">Share Link</button>
+        <div class="control-section">
+            <div class="control-label">Actions</div>
+            <div class="button-grid">
+                <button class="btn" id="resetCamera">🔄 Reset View</button>
+                <button class="btn" id="screenshot">📷 Screenshot</button>
+                <button class="btn" id="fullscreen">⛶ Fullscreen</button>
+                <button class="btn" id="shareLink">🔗 Share Link</button>
+            </div>
         </div>
     </div>
     
+    <!-- Info Panel -->
+    <div id="info">
+        <h3>Controls</h3>
+        <p><strong>Desktop:</strong><br>
+        • Left Click + Drag: Rotate<br>
+        • Right Click + Drag: Pan<br>
+        • Scroll: Zoom</p>
+        <p style="margin-top: 12px;"><strong>Mobile:</strong><br>
+        • One Finger: Rotate<br>
+        • Two Fingers: Pan & Zoom</p>
+    </div>
+    
+    <!-- Share Panel -->
     <div id="share-panel" class="hidden">
         <h3>Share This View</h3>
         <p>Copy this link to share your current camera position:</p>
         <input type="text" id="share-url" readonly>
-        <div>
-            <button class="btn" id="copyLink">Copy Link</button>
-            <button class="btn" id="closeShare">Close</button>
+        <div class="button-row">
+            <button class="btn" id="copyLink">📋 Copy Link</button>
+            <button class="btn" id="closeShare">✕ Close</button>
         </div>
-    </div>
-    
-    <div id="info">
-        <h3>Controls</h3>
-        <p><strong>Left Mouse:</strong> Rotate view<br>
-        <strong>Right Mouse:</strong> Pan<br>
-        <strong>Scroll:</strong> Zoom in/out</p>
     </div>
 
     <script type="importmap">
@@ -221,6 +452,54 @@
         // Store initial camera position
         let initialCameraPosition = new THREE.Vector3();
         let initialCameraTarget = new THREE.Vector3();
+        
+        // UI Controls
+        const fab = document.getElementById('fab');
+        const controls_panel = document.getElementById('controls');
+        const helpBtn = document.getElementById('help-btn');
+        const infoPanel = document.getElementById('info');
+        let controlsVisible = false;
+        let infoVisible = false;
+        
+        // Toggle controls panel
+        fab.addEventListener('click', () => {
+            controlsVisible = !controlsVisible;
+            if (controlsVisible) {
+                controls_panel.classList.add('visible');
+                fab.innerHTML = '✕';
+            } else {
+                controls_panel.classList.remove('visible');
+                fab.innerHTML = '☰';
+            }
+        });
+        
+        // Toggle help info
+        helpBtn.addEventListener('click', () => {
+            infoVisible = !infoVisible;
+            if (infoVisible) {
+                infoPanel.classList.add('visible');
+            } else {
+                infoPanel.classList.remove('visible');
+            }
+        });
+        
+        // Close controls when clicking outside
+        document.addEventListener('click', (e) => {
+            if (controlsVisible && 
+                !controls_panel.contains(e.target) && 
+                !fab.contains(e.target)) {
+                controls_panel.classList.remove('visible');
+                fab.innerHTML = '☰';
+                controlsVisible = false;
+            }
+            
+            if (infoVisible && 
+                !infoPanel.contains(e.target) && 
+                !helpBtn.contains(e.target)) {
+                infoPanel.classList.remove('visible');
+                infoVisible = false;
+            }
+        });
         
         // Background color dropdown
         document.getElementById('bgColor').addEventListener('change', (e) => {
@@ -306,6 +585,13 @@
         
         document.getElementById('closeShare').addEventListener('click', () => {
             document.getElementById('share-panel').classList.add('hidden');
+        });
+        
+        // Close share panel when clicking outside
+        document.getElementById('share-panel').addEventListener('click', (e) => {
+            if (e.target.id === 'share-panel') {
+                document.getElementById('share-panel').classList.add('hidden');
+            }
         });
         
         // GLTF Loader
