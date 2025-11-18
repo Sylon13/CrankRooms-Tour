@@ -423,8 +423,8 @@
                         
                         // Fix transparency for materials
                         if (child.material) {
-                            // If material has transparency/opacity settings
-                            if (child.material.opacity < 1 || child.material.transparent) {
+                            // Force transparency if opacity is less than 1
+                            if (child.material.opacity !== undefined && child.material.opacity < 1) {
                                 child.material.transparent = true;
                                 child.material.depthWrite = false;
                                 child.material.side = THREE.DoubleSide;
@@ -434,9 +434,20 @@
                             const matName = child.material.name ? child.material.name.toLowerCase() : '';
                             if (matName.includes('glass') || matName.includes('window') || matName.includes('transparent')) {
                                 child.material.transparent = true;
-                                child.material.opacity = 0.3; // Adjust this value (0.1 = very transparent, 0.9 = barely transparent)
+                                if (child.material.opacity === undefined || child.material.opacity === 1) {
+                                    child.material.opacity = 0.3;
+                                }
                                 child.material.depthWrite = false;
                                 child.material.side = THREE.DoubleSide;
+                            }
+                            
+                            // Log material info for debugging
+                            if (child.material.opacity < 1 || matName.includes('glass')) {
+                                console.log('Transparent material found:', {
+                                    name: child.material.name,
+                                    opacity: child.material.opacity,
+                                    transparent: child.material.transparent
+                                });
                             }
                         }
                     }
