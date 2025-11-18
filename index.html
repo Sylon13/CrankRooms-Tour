@@ -388,6 +388,7 @@
                 <option value="0x34495e">Slate Gray</option>
                 <option value="0xecf0f1">Light Gray</option>
                 <option value="0x95a5a6">Silver</option>
+                <option value="furballs">🐾 Furballs</option>
             </select>
         </div>
         
@@ -552,8 +553,16 @@
         
         // Background color dropdown
         document.getElementById('bgColor').addEventListener('change', (e) => {
-            const color = parseInt(e.target.value);
-            scene.background = new THREE.Color(color);
+            const value = e.target.value;
+            
+            if (value === 'furballs') {
+                // Set image background
+                scene.background = new THREE.TextureLoader().load('furballs.jpg');
+            } else {
+                // Set solid color background
+                const color = parseInt(value);
+                scene.background = new THREE.Color(color);
+            }
         });
         
         // Reset camera
