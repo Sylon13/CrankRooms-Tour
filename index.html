@@ -319,7 +319,7 @@
         
         // Load CrankRooms model
         loader.load(
-            'CrankRooms.gltf',
+            'CrankRooms.glb',
             function(gltf) {
                 const model = gltf.scene;
                 scene.add(model);
@@ -401,8 +401,8 @@
                 document.getElementById('loading').textContent = `Loading CrankRooms... ${percent}%`;
             },
             function(error) {
-                console.error('Error loading CrankRooms.gltf:', error);
-                document.getElementById('loading').textContent = 'Error: Could not load CrankRooms.gltf';
+                console.error('Error loading CrankRooms.glb:', error);
+                document.getElementById('loading').textContent = 'Error: Could not load CrankRooms.glb';
                 document.getElementById('loading').style.color = '#ff6b6b';
                 
                 // Show helpful error message
@@ -410,7 +410,7 @@
                     document.getElementById('loading').innerHTML = `
                         <strong>Error loading model</strong><br><br>
                         Make sure:<br>
-                        • CrankRooms.gltf is in the same folder<br>
+                        • CrankRooms.glb is in the same folder<br>
                         • File name matches exactly (case-sensitive)<br>
                         • File isn't corrupted<br><br>
                         Check browser console (F12) for details
