@@ -415,11 +415,30 @@
                 const model = gltf.scene;
                 scene.add(model);
                 
-                // Enable shadows
+                // Enable shadows and fix transparency
                 model.traverse((child) => {
                     if (child.isMesh) {
                         child.castShadow = true;
                         child.receiveShadow = true;
+                        
+                        // Fix transparency for materials
+                        if (child.material) {
+                            // If material has transparency/opacity settings
+                            if (child.material.opacity < 1 || child.material.transparent) {
+                                child.material.transparent = true;
+                                child.material.depthWrite = false;
+                                child.material.side = THREE.DoubleSide;
+                            }
+                            
+                            // Check if material name suggests glass
+                            const matName = child.material.name ? child.material.name.toLowerCase() : '';
+                            if (matName.includes('glass') || matName.includes('window') || matName.includes('transparent')) {
+                                child.material.transparent = true;
+                                child.material.opacity = 0.3; // Adjust this value (0.1 = very transparent, 0.9 = barely transparent)
+                                child.material.depthWrite = false;
+                                child.material.side = THREE.DoubleSide;
+                            }
+                        }
                     }
                 });
                 
