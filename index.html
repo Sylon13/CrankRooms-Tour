@@ -376,12 +376,12 @@
     <div id="info">
         <h3>Controls</h3>
         <p><strong>Desktop:</strong><br>
-        • Left Click + Drag: Rotate<br>
-        • Right Click + Drag: Pan<br>
+        • Left Click + Drag: Pan<br>
+        • Right Click + Drag: Rotate<br>
         • Scroll: Zoom</p>
         <p style="margin-top: 12px;"><strong>Mobile:</strong><br>
-        • One Finger: Rotate<br>
-        • Two Fingers: Pan & Zoom</p>
+        • One Finger: Pan<br>
+        • Two Fingers: Rotate & Zoom</p>
     </div>
     
     <!-- Share Panel -->
@@ -436,6 +436,19 @@
         controls.minDistance = 5;
         controls.maxDistance = 50;
         controls.maxPolarAngle = Math.PI / 2;
+        
+        // Reverse mouse buttons: Right click to rotate, Left click to pan
+        controls.mouseButtons = {
+            LEFT: THREE.MOUSE.PAN,
+            MIDDLE: THREE.MOUSE.DOLLY,
+            RIGHT: THREE.MOUSE.ROTATE
+        };
+        
+        // Reverse touch controls: One finger pans, Two fingers rotate
+        controls.touches = {
+            ONE: THREE.TOUCH.PAN,
+            TWO: THREE.TOUCH.DOLLY_ROTATE
+        };
         
         // Lighting setup
         const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
