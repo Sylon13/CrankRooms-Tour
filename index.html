@@ -497,15 +497,17 @@
         let partyModeActive = false;
         let partyInterval = null;
         const partyColors = [
-            0xff0000, // Red
-            0xff7700, // Orange
-            0xffff00, // Yellow
-            0x00ff00, // Green
-            0x0000ff, // Blue
-            0xff00ff, // Magenta
-            0x00ffff  // Cyan
+            0xffb3ba, // Soft pink
+            0xffdfba, // Soft peach
+            0xffffba, // Soft yellow
+            0xbaffc9, // Soft mint
+            0xbae1ff, // Soft blue
+            0xe0bbff, // Soft purple
+            0xffd4e5  // Soft rose
         ];
         let partyColorIndex = 0;
+        let partyStartTime = 0;
+        const partyTransitionDuration = 2000; // 2 seconds for smooth transition
         
         // Store initial camera position
         let initialCameraPosition = new THREE.Vector3();
@@ -646,42 +648,19 @@
             document.getElementById('share-panel').classList.add('hidden');
         });
         
-        // Party Mode
+        // Party Mode - Safe version with smooth transitions
         document.getElementById('partyMode').addEventListener('click', () => {
             partyModeActive = !partyModeActive;
             const partyBtn = document.getElementById('partyMode');
             
             if (partyModeActive) {
                 partyBtn.textContent = '🎉 Stop Party';
-                partyBtn.style.background = 'rgba(255, 0, 255, 0.3)';
-                
-                // Start party mode animation
-                partyInterval = setInterval(() => {
-                    // Cycle through colors
-                    const color1 = partyColors[partyColorIndex % partyColors.length];
-                    const color2 = partyColors[(partyColorIndex + 2) % partyColors.length];
-                    const color3 = partyColors[(partyColorIndex + 4) % partyColors.length];
-                    
-                    // Change light colors
-                    directionalLight.color.setHex(color1);
-                    fillLight.color.setHex(color2);
-                    
-                    // Pulse light intensity
-                    const intensity = 0.5 + Math.sin(Date.now() * 0.005) * 0.5;
-                    ambientLight.intensity = intensity;
-                    
-                    // Rotate background colors
-                    scene.background.setHex(color3);
-                    
-                    partyColorIndex++;
-                }, 200); // Change every 200ms
-                
+                partyBtn.style.background = 'rgba(224, 187, 255, 0.3)';
+                partyStartTime = Date.now();
+                partyColorIndex = 0;
             } else {
                 partyBtn.textContent = '🎉 Party Mode';
                 partyBtn.style.background = '';
-                
-                // Stop party mode
-                clearInterval(partyInterval);
                 
                 // Reset to original colors
                 directionalLight.color.setHex(0xffffff);
@@ -765,6 +744,34 @@
         function animate() {
             requestAnimationFrame(animate);
             controls.update();
+            
+            // Party mode animation - smooth and safe
+            if (partyModeActive) {
+                const elapsed = Date.now() - partyStartTime;
+                const cycleProgress = (elapsed % partyTransitionDuration) / partyTransitionDuration;
+                
+                // Smooth transition between colors using sine wave
+                const colorIndex1 = Math.floor(elapsed / partyTransitionDuration) % partyColors.length;
+                const colorIndex2 = (colorIndex1 + 1) % partyColors.length;
+                
+                // Interpolate between colors smoothly
+                const t = (Math.sin(cycleProgress * Math.PI * 2 - Math.PI / 2) + 1) / 2; // Smooth easing
+                
+                const color1 = new THREE.Color(partyColors[colorIndex1]);
+                const color2 = new THREE.Color(partyColors[colorIndex2]);
+                
+                // Lerp (linear interpolate) between colors
+                const currentColor = color1.clone().lerp(color2, t);
+                
+                // Apply smooth color transitions
+                scene.background.copy(currentColor);
+                directionalLight.color.copy(currentColor);
+                
+                // Very gentle intensity pulse (barely noticeable)
+                const intensityPulse = 0.6 + Math.sin(elapsed * 0.001) * 0.1;
+                ambientLight.intensity = intensityPulse;
+            }
+            
             renderer.render(scene, camera);
         }
         animate();
