@@ -194,6 +194,7 @@
         // Renderer setup
         const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio * 1.5, 2)); // Increase pixel ratio for smoother edges
         document.getElementById('canvas-container').appendChild(renderer.domElement);
         
         // Orbit Controls
