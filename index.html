@@ -23,7 +23,7 @@
             height: 100vh;
         }
         
-        /* Floating Action Button */
+        /* Floating Action Button - Mobile Only */
         #fab {
             position: fixed;
             bottom: 20px;
@@ -63,14 +63,40 @@
             backdrop-filter: blur(10px);
             -webkit-backdrop-filter: blur(10px);
             padding: 20px;
-            transform: translateY(100%);
             transition: transform 0.3s ease;
             z-index: 999;
             border-top: 1px solid rgba(255, 255, 255, 0.1);
         }
         
-        #controls.visible {
-            transform: translateY(0);
+        /* Mobile: hidden by default, slides up when visible */
+        @media (max-width: 768px) {
+            #controls {
+                transform: translateY(100%);
+            }
+            
+            #controls.visible {
+                transform: translateY(0);
+            }
+        }
+        
+        /* Desktop: always visible on right side */
+        @media (min-width: 769px) {
+            #fab {
+                display: none;
+            }
+            
+            #controls {
+                top: 20px;
+                bottom: auto;
+                left: auto;
+                right: 20px;
+                width: 280px;
+                max-height: calc(100vh - 40px);
+                overflow-y: auto;
+                border-radius: 12px;
+                border: 1px solid rgba(255, 255, 255, 0.1);
+                transform: none !important;
+            }
         }
         
         .control-section {
@@ -190,15 +216,33 @@
             border-radius: 12px;
             font-size: 14px;
             z-index: 999;
-            opacity: 0;
-            pointer-events: none;
             transition: opacity 0.3s ease;
             border: 1px solid rgba(255, 255, 255, 0.1);
         }
         
-        #info.visible {
-            opacity: 1;
-            pointer-events: auto;
+        /* Mobile: hidden by default */
+        @media (max-width: 768px) {
+            #info {
+                opacity: 0;
+                pointer-events: none;
+            }
+            
+            #info.visible {
+                opacity: 1;
+                pointer-events: auto;
+            }
+        }
+        
+        /* Desktop: always visible */
+        @media (min-width: 769px) {
+            #help-btn {
+                display: none;
+            }
+            
+            #info {
+                opacity: 1;
+                pointer-events: auto;
+            }
         }
         
         #info h3 {
@@ -314,21 +358,8 @@
         
         /* Desktop Optimizations */
         @media (min-width: 769px) {
-            #fab {
-                bottom: 30px;
-                right: 30px;
-            }
-            
-            #controls {
-                left: 50%;
-                right: auto;
-                transform: translate(-50%, 100%);
-                max-width: 600px;
-                border-radius: 16px 16px 0 0;
-            }
-            
-            #controls.visible {
-                transform: translate(-50%, 0);
+            .button-grid {
+                grid-template-columns: 1fr;
             }
         }
     </style>
