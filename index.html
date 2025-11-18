@@ -21,7 +21,6 @@
         #canvas-container {
             width: 100vw;
             height: 100vh;
-            touch-action: none;
         }
         
         /* Floating Action Button */
@@ -468,49 +467,38 @@
         
         // UI Controls
         const fab = document.getElementById('fab');
-        const controls_panel = document.getElementById('controls');
+        const controlsPanel = document.getElementById('controls');
         const helpBtn = document.getElementById('help-btn');
         const infoPanel = document.getElementById('info');
-        let controlsVisible = false;
-        let infoVisible = false;
         
         // Toggle controls panel
-        fab.addEventListener('click', () => {
-            controlsVisible = !controlsVisible;
-            if (controlsVisible) {
-                controls_panel.classList.add('visible');
-                fab.innerHTML = '✕';
-            } else {
-                controls_panel.classList.remove('visible');
-                fab.innerHTML = '☰';
-            }
+        fab.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const isVisible = controlsPanel.classList.toggle('visible');
+            fab.innerHTML = isVisible ? '✕' : '☰';
         });
         
         // Toggle help info
-        helpBtn.addEventListener('click', () => {
-            infoVisible = !infoVisible;
-            if (infoVisible) {
-                infoPanel.classList.add('visible');
-            } else {
-                infoPanel.classList.remove('visible');
-            }
+        helpBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            infoPanel.classList.toggle('visible');
         });
         
-        // Close controls when clicking outside
+        // Close panels when clicking outside
         document.addEventListener('click', (e) => {
-            if (controlsVisible && 
-                !controls_panel.contains(e.target) && 
+            // Close controls if open and click is outside
+            if (controlsPanel.classList.contains('visible') && 
+                !controlsPanel.contains(e.target) && 
                 !fab.contains(e.target)) {
-                controls_panel.classList.remove('visible');
+                controlsPanel.classList.remove('visible');
                 fab.innerHTML = '☰';
-                controlsVisible = false;
             }
             
-            if (infoVisible && 
+            // Close info if open and click is outside
+            if (infoPanel.classList.contains('visible') && 
                 !infoPanel.contains(e.target) && 
                 !helpBtn.contains(e.target)) {
                 infoPanel.classList.remove('visible');
-                infoVisible = false;
             }
         });
         
@@ -586,25 +574,30 @@
             document.getElementById('share-panel').classList.remove('hidden');
         });
         
-        document.getElementById('copyLink').addEventListener('click', () => {
+        document.getElementById('copyLink').addEventListener('click', async () => {
             const input = document.getElementById('share-url');
-            input.select();
-            document.execCommand('copy');
-            document.getElementById('copyLink').textContent = 'Copied!';
-            setTimeout(() => {
-                document.getElementById('copyLink').textContent = 'Copy Link';
-            }, 2000);
+            const copyBtn = document.getElementById('copyLink');
+            
+            try {
+                // Modern Clipboard API
+                await navigator.clipboard.writeText(input.value);
+                copyBtn.textContent = '✓ Copied!';
+                setTimeout(() => {
+                    copyBtn.textContent = '📋 Copy Link';
+                }, 2000);
+            } catch (err) {
+                // Fallback for older browsers
+                input.select();
+                document.execCommand('copy');
+                copyBtn.textContent = '✓ Copied!';
+                setTimeout(() => {
+                    copyBtn.textContent = '📋 Copy Link';
+                }, 2000);
+            }
         });
         
         document.getElementById('closeShare').addEventListener('click', () => {
             document.getElementById('share-panel').classList.add('hidden');
-        });
-        
-        // Close share panel when clicking outside
-        document.getElementById('share-panel').addEventListener('click', (e) => {
-            if (e.target.id === 'share-panel') {
-                document.getElementById('share-panel').classList.add('hidden');
-            }
         });
         
         // GLTF Loader
@@ -616,13 +609,6 @@
             function(gltf) {
                 const model = gltf.scene;
                 scene.add(model);
-                
-                // Enable model rendering
-                model.traverse((child) => {
-                    if (child.isMesh) {
-                        // No shadow settings needed
-                    }
-                });
                 
                 // Center the model and adjust camera
                 const box = new THREE.Box3().setFromObject(model);
