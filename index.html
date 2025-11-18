@@ -137,16 +137,14 @@
         </select>
         
         <div class="control-row">
-            <button class="btn btn-small" id="toggleGrid">Hide Grid</button>
             <button class="btn btn-small" id="resetCamera">Reset View</button>
+            <button class="btn btn-small" id="screenshot">Screenshot</button>
         </div>
         
         <div class="control-row">
-            <button class="btn btn-small" id="screenshot">Screenshot</button>
             <button class="btn btn-small" id="fullscreen">Fullscreen</button>
+            <button class="btn btn-small" id="shareLink">Share Link</button>
         </div>
-        
-        <button class="btn btn-small" id="shareLink">Share Link</button>
     </div>
     
     <div id="share-panel" class="hidden">
@@ -226,21 +224,9 @@
         fillLight.position.set(-5, 10, -5);
         scene.add(fillLight);
         
-        // Grid helper for reference
-        const gridHelper = new THREE.GridHelper(20, 20, 0x888888, 0x444444);
-        scene.add(gridHelper);
-        
         // Store initial camera position
         let initialCameraPosition = new THREE.Vector3();
         let initialCameraTarget = new THREE.Vector3();
-        
-        // Toggle grid button
-        let gridVisible = true;
-        document.getElementById('toggleGrid').addEventListener('click', () => {
-            gridVisible = !gridVisible;
-            gridHelper.visible = gridVisible;
-            document.getElementById('toggleGrid').textContent = gridVisible ? 'Hide Grid' : 'Show Grid';
-        });
         
         // Background color dropdown
         document.getElementById('bgColor').addEventListener('change', (e) => {
