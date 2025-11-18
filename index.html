@@ -25,6 +25,93 @@
             font-size: 14px;
             max-width: 300px;
         }
+        #controls {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-width: 200px;
+        }
+        .control-row {
+            display: flex;
+            gap: 10px;
+        }
+        .btn {
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+            white-space: nowrap;
+        }
+        .btn:hover {
+            background: rgba(0, 0, 0, 0.9);
+            border-color: rgba(255, 255, 255, 0.6);
+        }
+        .btn-small {
+            padding: 8px 12px;
+            font-size: 12px;
+        }
+        select {
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            padding: 10px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+            width: 100%;
+        }
+        select:hover {
+            background: rgba(0, 0, 0, 0.9);
+            border-color: rgba(255, 255, 255, 0.6);
+        }
+        select option {
+            background: rgba(0, 0, 0, 0.95);
+            color: white;
+        }
+        #minimap {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            width: 150px;
+            height: 150px;
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            border-radius: 8px;
+            background: rgba(0, 0, 0, 0.7);
+        }
+        #share-panel {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.95);
+            padding: 30px;
+            border-radius: 12px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            max-width: 500px;
+            z-index: 200;
+        }
+        #share-panel input {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            background: rgba(255, 255, 255, 0.1);
+            color: white;
+            font-size: 14px;
+        }
+        #share-panel button {
+            margin: 5px;
+        }
         #loading {
             position: absolute;
             top: 50%;
@@ -46,6 +133,54 @@
     <div id="canvas-container"></div>
     
     <div id="loading">Loading CrankRooms...</div>
+    
+    <div id="controls">
+        <select id="bgColor">
+            <option value="0x87ceeb">Sky Blue</option>
+            <option value="0x1a1a1a">Dark Gray</option>
+            <option value="0x000000">Black</option>
+            <option value="0xffffff">White</option>
+            <option value="0x2c3e50">Midnight Blue</option>
+            <option value="0x34495e">Slate Gray</option>
+            <option value="0xecf0f1">Light Gray</option>
+            <option value="0x95a5a6">Silver</option>
+        </select>
+        
+        <select id="lightingPreset">
+            <option value="default">Default Lighting</option>
+            <option value="bright">Bright Studio</option>
+            <option value="dim">Dim Ambient</option>
+            <option value="sunset">Warm Sunset</option>
+            <option value="cool">Cool Blue</option>
+        </select>
+        
+        <div class="control-row">
+            <button class="btn btn-small" id="toggleGrid">Hide Grid</button>
+            <button class="btn btn-small" id="toggleFog">Fog On</button>
+        </div>
+        
+        <div class="control-row">
+            <button class="btn btn-small" id="resetCamera">Reset View</button>
+            <button class="btn btn-small" id="screenshot">Screenshot</button>
+        </div>
+        
+        <div class="control-row">
+            <button class="btn btn-small" id="fullscreen">Fullscreen</button>
+            <button class="btn btn-small" id="shareLink">Share</button>
+        </div>
+    </div>
+    
+    <canvas id="minimap"></canvas>
+    
+    <div id="share-panel" class="hidden">
+        <h3>Share This View</h3>
+        <p>Copy this link to share your current camera position:</p>
+        <input type="text" id="share-url" readonly>
+        <div>
+            <button class="btn" id="copyLink">Copy Link</button>
+            <button class="btn" id="closeShare">Close</button>
+        </div>
+    </div>
     
     <div id="info">
         <h3>Controls</h3>
@@ -110,14 +245,165 @@
         directionalLight.shadow.camera.far = 50;
         scene.add(directionalLight);
         
-        // Add a second light for better illumination
         const fillLight = new THREE.DirectionalLight(0xffffff, 0.3);
         fillLight.position.set(-5, 10, -5);
         scene.add(fillLight);
         
-        // Grid helper for reference (optional)
+        // Store original light values
+        const lightPresets = {
+            default: { ambient: 0.6, dir: 0.8, fill: 0.3, dirColor: 0xffffff, fillColor: 0xffffff },
+            bright: { ambient: 0.9, dir: 1.2, fill: 0.6, dirColor: 0xffffff, fillColor: 0xffffff },
+            dim: { ambient: 0.3, dir: 0.4, fill: 0.1, dirColor: 0xffffff, fillColor: 0xffffff },
+            sunset: { ambient: 0.5, dir: 0.9, fill: 0.4, dirColor: 0xffaa77, fillColor: 0xff8844 },
+            cool: { ambient: 0.6, dir: 0.8, fill: 0.3, dirColor: 0xaaccff, fillColor: 0x8899ff }
+        };
+        
+        // Grid helper for reference
         const gridHelper = new THREE.GridHelper(20, 20, 0x888888, 0x444444);
         scene.add(gridHelper);
+        
+        // Fog setup (initially off)
+        let fogEnabled = false;
+        const fogColor = 0x87ceeb;
+        const fogNear = 10;
+        const fogFar = 50;
+        
+        // Store initial camera position
+        let initialCameraPosition = new THREE.Vector3();
+        let initialCameraTarget = new THREE.Vector3();
+        
+        // Minimap setup
+        const minimapCanvas = document.getElementById('minimap');
+        const minimapRenderer = new THREE.WebGLRenderer({ canvas: minimapCanvas, alpha: true });
+        minimapRenderer.setSize(150, 150);
+        
+        const minimapCamera = new THREE.OrthographicCamera(-15, 15, 15, -15, 0.1, 100);
+        minimapCamera.position.set(0, 30, 0);
+        minimapCamera.lookAt(0, 0, 0);
+        
+        // Camera indicator for minimap
+        const cameraIndicator = new THREE.Mesh(
+            new THREE.ConeGeometry(0.5, 1, 4),
+            new THREE.MeshBasicMaterial({ color: 0xff0000 })
+        );
+        cameraIndicator.rotation.x = Math.PI;
+        scene.add(cameraIndicator);
+        
+        // Toggle grid button
+        let gridVisible = true;
+        document.getElementById('toggleGrid').addEventListener('click', () => {
+            gridVisible = !gridVisible;
+            gridHelper.visible = gridVisible;
+            document.getElementById('toggleGrid').textContent = gridVisible ? 'Hide Grid' : 'Show Grid';
+        });
+        
+        // Background color dropdown
+        document.getElementById('bgColor').addEventListener('change', (e) => {
+            const color = parseInt(e.target.value);
+            scene.background = new THREE.Color(color);
+        });
+        
+        // Lighting presets
+        document.getElementById('lightingPreset').addEventListener('change', (e) => {
+            const preset = lightPresets[e.target.value];
+            ambientLight.intensity = preset.ambient;
+            directionalLight.intensity = preset.dir;
+            directionalLight.color.setHex(preset.dirColor);
+            fillLight.intensity = preset.fill;
+            fillLight.color.setHex(preset.fillColor);
+        });
+        
+        // Fog toggle
+        document.getElementById('toggleFog').addEventListener('click', () => {
+            fogEnabled = !fogEnabled;
+            if (fogEnabled) {
+                scene.fog = new THREE.Fog(fogColor, fogNear, fogFar);
+                document.getElementById('toggleFog').textContent = 'Fog Off';
+            } else {
+                scene.fog = null;
+                document.getElementById('toggleFog').textContent = 'Fog On';
+            }
+        });
+        
+        // Reset camera
+        document.getElementById('resetCamera').addEventListener('click', () => {
+            camera.position.copy(initialCameraPosition);
+            controls.target.copy(initialCameraTarget);
+            controls.update();
+        });
+        
+        // Screenshot
+        document.getElementById('screenshot').addEventListener('click', () => {
+            renderer.render(scene, camera);
+            const dataURL = renderer.domElement.toDataURL('image/png');
+            const link = document.createElement('a');
+            link.download = 'crankrooms-screenshot.png';
+            link.href = dataURL;
+            link.click();
+        });
+        
+        // Fullscreen
+        document.getElementById('fullscreen').addEventListener('click', () => {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
+                document.getElementById('fullscreen').textContent = 'Exit FS';
+            } else {
+                document.exitFullscreen();
+                document.getElementById('fullscreen').textContent = 'Fullscreen';
+            }
+        });
+        
+        // Share link
+        function generateShareURL() {
+            const pos = camera.position;
+            const target = controls.target;
+            const params = new URLSearchParams({
+                px: pos.x.toFixed(2),
+                py: pos.y.toFixed(2),
+                pz: pos.z.toFixed(2),
+                tx: target.x.toFixed(2),
+                ty: target.y.toFixed(2),
+                tz: target.z.toFixed(2)
+            });
+            return `${window.location.origin}${window.location.pathname}?${params.toString()}`;
+        }
+        
+        function loadCameraFromURL() {
+            const params = new URLSearchParams(window.location.search);
+            if (params.has('px')) {
+                camera.position.set(
+                    parseFloat(params.get('px')),
+                    parseFloat(params.get('py')),
+                    parseFloat(params.get('pz'))
+                );
+                controls.target.set(
+                    parseFloat(params.get('tx')),
+                    parseFloat(params.get('ty')),
+                    parseFloat(params.get('tz'))
+                );
+                controls.update();
+            }
+        }
+        
+        document.getElementById('shareLink').addEventListener('click', () => {
+            const url = generateShareURL();
+            document.getElementById('share-url').value = url;
+            document.getElementById('share-panel').classList.remove('hidden');
+        });
+        
+        document.getElementById('copyLink').addEventListener('click', () => {
+            const input = document.getElementById('share-url');
+            input.select();
+            document.execCommand('copy');
+            document.getElementById('copyLink').textContent = 'Copied!';
+            setTimeout(() => {
+                document.getElementById('copyLink').textContent = 'Copy Link';
+            }, 2000);
+        });
+        
+        document.getElementById('closeShare').addEventListener('click', () => {
+            document.getElementById('share-panel').classList.add('hidden');
+        });
         
         // GLTF Loader
         const loader = new GLTFLoader();
@@ -154,9 +440,16 @@
                 camera.position.set(cameraZ, cameraZ * 0.8, cameraZ);
                 camera.lookAt(0, 0, 0);
                 
+                // Store initial position
+                initialCameraPosition.copy(camera.position);
+                initialCameraTarget.copy(new THREE.Vector3(0, 0, 0));
+                
                 // Update controls
                 controls.target.set(0, 0, 0);
                 controls.update();
+                
+                // Check URL parameters for camera position
+                loadCameraFromURL();
                 
                 // Hide loading message
                 document.getElementById('loading').classList.add('hidden');
@@ -191,7 +484,19 @@
         function animate() {
             requestAnimationFrame(animate);
             controls.update();
+            
+            // Update camera indicator on minimap
+            cameraIndicator.position.set(camera.position.x, 0.5, camera.position.z);
+            cameraIndicator.rotation.y = Math.atan2(
+                camera.position.x - controls.target.x,
+                camera.position.z - controls.target.z
+            );
+            
+            // Render main scene
             renderer.render(scene, camera);
+            
+            // Render minimap
+            minimapRenderer.render(scene, minimapCamera);
         }
         animate();
         
